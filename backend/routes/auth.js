@@ -58,7 +58,7 @@ router.post('/send-otp', async (req, res) => {
 
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, referralCode, otp } = req.body;
+    const { email, password, referralCode, otp, phone } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Invalid email format' });
     if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
@@ -86,6 +86,7 @@ router.post('/register', async (req, res) => {
     const user = await prisma.user.create({
       data: {
         email,
+        phone: phone || null,
         password: hashed,
         referralCode: myCode,
         referredById,

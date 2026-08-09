@@ -19,7 +19,14 @@ const _sweepInProgress = new Set();
 router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { search, page = 1, limit } = req.query;
-    const where = search ? { email: { contains: search } } : {};
+    const where = search ? {
+      OR: [
+        { email: { contains: search, mode: 'insensitive' } },
+        { id: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } },
+        { kycData: { idNumber: { contains: search, mode: 'insensitive' } } }
+      ]
+    } : {};
     // The targeted-signal user picker calls this with ?limit=5000 to load
     // every user for its plan-tab/balance filtering — the hardcoded take:20
     // silently limited it to the 20 most recently registered users only,

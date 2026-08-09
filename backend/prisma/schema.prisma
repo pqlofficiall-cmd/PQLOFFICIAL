@@ -8,79 +8,80 @@ datasource db {
 }
 
 model User {
-  id                 String               @id @default(cuid())
-  email              String               @unique
-  password           String
-  role               String               @default("USER")
-  isVerified         Boolean              @default(false)
-  verificationToken  String?
-  resetToken         String?
-  resetTokenExpiry   DateTime?
-  referralCode       String               @unique
-  referredById       String?
-  referredBy         User?                @relation("Referrals", fields: [referredById], references: [id])
-  referrals          User[]               @relation("Referrals")
-  balance            Float                @default(0)
-  exchangeBalance    Float                @default(0)
-  tradeBalance       Float                @default(0)
-  perpetualBalance   Float                @default(0)
-  lockedBalance      Float                @default(0)
-  profitBalance      Float                @default(0)
-  referralBalance    Float                @default(0)
-  convertedBalance   Float                @default(0)
-  investments        Float                @default(0)
-  otpSecret          String?
-  twoFaEnabled       Boolean              @default(false)
-  boundAddress       String?
-  boundAddressChain  String?
+  id                  String              @id @default(cuid())
+  email               String              @unique
+  phone               String?
+  password            String
+  role                String              @default("USER")
+  isVerified          Boolean             @default(false)
+  verificationToken   String?
+  resetToken          String?
+  resetTokenExpiry    DateTime?
+  referralCode        String              @unique
+  referredById        String?
+  referredBy          User?               @relation("Referrals", fields: [referredById], references: [id])
+  referrals           User[]              @relation("Referrals")
+  balance             Float               @default(0)
+  exchangeBalance     Float               @default(0)
+  tradeBalance        Float               @default(0)
+  perpetualBalance    Float               @default(0)
+  lockedBalance       Float               @default(0)
+  profitBalance       Float               @default(0)
+  referralBalance     Float               @default(0)
+  convertedBalance    Float               @default(0)
+  investments         Float               @default(0)
+  otpSecret           String?
+  twoFaEnabled        Boolean             @default(false)
+  boundAddress        String?
+  boundAddressChain   String?
   withdrawFreezeUntil DateTime?
-  suspended          Boolean              @default(false)
-  suspendedReason    String?
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  kycData            KYC?
-  trades             Trade[]
-  investmentPlans    Investment[]
-  transactions       Transaction[]
-  notifications      Notification[]
-  walletAddresses    WalletAddress[]
-  loginHistory       LoginHistory[]
-  tronWallet         TronWallet?
-  deposits           Deposit[]
-  withdrawals        Withdrawal[]
-  balanceAdjustments BalanceAdjustment[]
-  chatMessages       ChatMessage[]
-  targetedSignals    Signal[]             @relation("TargetedSignals")
-  signalTargets      SignalTarget[]
-  walletTransferLogs WalletTransferLog[]
-  investmentLocks    InvestmentLock[]
+  suspended           Boolean             @default(false)
+  suspendedReason     String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  kycData             KYC?
+  trades              Trade[]
+  investmentPlans     Investment[]
+  transactions        Transaction[]
+  notifications       Notification[]
+  walletAddresses     WalletAddress[]
+  loginHistory        LoginHistory[]
+  tronWallet          TronWallet?
+  deposits            Deposit[]
+  withdrawals         Withdrawal[]
+  balanceAdjustments  BalanceAdjustment[]
+  chatMessages        ChatMessage[]
+  targetedSignals     Signal[]            @relation("TargetedSignals")
+  signalTargets       SignalTarget[]
+  walletTransferLogs  WalletTransferLog[]
+  investmentLocks     InvestmentLock[]
 }
 
 model TronWallet {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  user             User     @relation(fields: [userId], references: [id])
-  tronAddress      String   @unique
-  derivationIndex  Int      @unique
-  createdAt        DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  tronAddress     String   @unique
+  derivationIndex Int      @unique
+  createdAt       DateTime @default(now())
 }
 
 model Deposit {
-  id               String    @id @default(cuid())
-  userId           String
-  user             User      @relation(fields: [userId], references: [id])
-  txHash           String    @unique
-  fromAddress      String
-  amount           Float
-  currency         String    @default("USDT")
-  status           String    @default("pending_approval")
-  sweepTxHash      String?
-  sweepStatus      String    @default("pending")
-  sweepError       String?
-  rejectionReason  String?
-  detectedAt       DateTime  @default(now())
-  approvedAt       DateTime?
-  approvedBy       String?
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  txHash          String    @unique
+  fromAddress     String
+  amount          Float
+  currency        String    @default("USDT")
+  status          String    @default("pending_approval")
+  sweepTxHash     String?
+  sweepStatus     String    @default("pending")
+  sweepError      String?
+  rejectionReason String?
+  detectedAt      DateTime  @default(now())
+  approvedAt      DateTime?
+  approvedBy      String?
 }
 
 model Withdrawal {
@@ -120,6 +121,7 @@ model WalletAddress {
   network   String
   address   String
   createdAt DateTime @default(now())
+
   @@unique([userId, network])
 }
 
@@ -154,24 +156,24 @@ model Notification {
 }
 
 model Signal {
-  id               String   @id @default(cuid())
+  id               String         @id @default(cuid())
   pair             String
-  direction        String   // CALL or PUT
-  marketType       String   @default("FUTURES")
+  direction        String // CALL or PUT
+  marketType       String         @default("FUTURES")
   entryTime        DateTime
   duration         Int
-  multiplier       Float    @default(1.8)
-  rewardPercentage Float    @default(80)
+  multiplier       Float          @default(1.8)
+  rewardPercentage Float          @default(80)
   suggestedAmount  Float?
-  riskLevel        String   @default("MEDIUM")
-  visibilityTier   Int      @default(1)
+  riskLevel        String         @default("MEDIUM")
+  visibilityTier   Int            @default(1)
   growthTarget     Float?
-  status           String   @default("PENDING")
+  status           String         @default("PENDING")
   result           String?
   accessCode       String?
   targetUserId     String?
-  targetUser       User?    @relation("TargetedSignals", fields: [targetUserId], references: [id])
-  createdAt        DateTime @default(now())
+  targetUser       User?          @relation("TargetedSignals", fields: [targetUserId], references: [id])
+  createdAt        DateTime       @default(now())
   trades           Trade[]
   targets          SignalTarget[]
 }
@@ -187,6 +189,7 @@ model SignalTarget {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
   @@unique([signalId, userId])
 }
 
@@ -199,7 +202,7 @@ model Trade {
   amount     Float
   direction  String
   pair       String? // Added for manual trades
-  duration   Int?    // Added for manual trades
+  duration   Int? // Added for manual trades
   outcome    String   @default("PENDING")
   profit     Float    @default(0)
   entryPrice Float?
@@ -223,20 +226,20 @@ model Transaction {
 }
 
 model KYC {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id])
-  fullName       String?
-  idNumber       String?
-  selfieUrl      String?
-  addressDocUrl  String?
-  idFrontUrl     String?
-  idBackUrl      String?
-  country        String?
-  rejectReason   String?
-  status         String   @default("NONE")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  fullName      String?
+  idNumber      String?
+  selfieUrl     String?
+  addressDocUrl String?
+  idFrontUrl    String?
+  idBackUrl     String?
+  country       String?
+  rejectReason  String?
+  status        String   @default("NONE")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model PlatformSettings {
@@ -258,31 +261,31 @@ model ChatMessage {
 }
 
 model WalletTransferLog {
-  id               String   @id @default(cuid())
-  userId           String
-  user             User     @relation(fields: [userId], references: [id])
-  fromWallet       String
-  toWallet         String
-  amount           Float
-  transferType     String
-  principalAmount  Float    @default(0)
-  profitAmount     Float    @default(0)
-  penaltyAmount    Float    @default(0)
-  createdAt        DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  fromWallet      String
+  toWallet        String
+  amount          Float
+  transferType    String
+  principalAmount Float    @default(0)
+  profitAmount    Float    @default(0)
+  penaltyAmount   Float    @default(0)
+  createdAt       DateTime @default(now())
 }
 
 model InvestmentLock {
-  id                       String   @id @default(cuid())
-  userId                   String   @unique
-  user                     User     @relation(fields: [userId], references: [id])
-  principalLocked          Float    @default(0)
+  id                       String    @id @default(cuid())
+  userId                   String    @unique
+  user                     User      @relation(fields: [userId], references: [id])
+  principalLocked          Float     @default(0)
   lockStartDate            DateTime?
   lockEndDate              DateTime?
-  penaltyPercentage        Float    @default(0)
-  transferredPrincipal     Float    @default(0)
-  remainingLockedPrincipal Float    @default(0)
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  penaltyPercentage        Float     @default(0)
+  transferredPrincipal     Float     @default(0)
+  remainingLockedPrincipal Float     @default(0)
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 }
 
 model OtpHistory {

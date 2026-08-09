@@ -83,6 +83,29 @@ router.post('/change-password', authMiddleware, async (req, res) => {
   }
 });
 
+// One-time backfill: older clients only ever saved the phone number to
+// localStorage on the device that registered, never to the backend, so it
+// never reached the database or the admin panel. This lets the app resync
+// that locally-stored number once, without overwriting a value already set.
+router.post('/sync-phone', authMiddleware, async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ error: 'Phone required' });
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
+    if (!user) return res.status(404).json({ error: 'Not found' });
+    if (user.phone) return res.json({ phone: user.phone });
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { phone }
+    });
+    res.json({ phone: updated.phone });
+  } catch (error) {
+    res.status(500).json({ error: 'An internal server error occurred.' });
+  }
+});
+
 // Get wallet with addresses
 router.get('/wallet', authMiddleware, async (req, res) => {
   try {

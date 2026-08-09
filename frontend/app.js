@@ -2149,9 +2149,26 @@ async function refreshUserData() {
         userData = data;
         localStorage.setItem('user', JSON.stringify(userData));
         updateUIWithUserData();
+        syncLocalPhoneIfNeeded();
     } catch (err) {
         console.error('Refresh error:', err);
     }
+}
+
+// Backfills the phone number for accounts created before phone was wired
+// up to the backend — it was only ever saved to localStorage on the
+// registering device, so this recovers it the next time that device opens the app.
+function syncLocalPhoneIfNeeded() {
+    if (!userData || userData.phone || !userData.email) return;
+    const savedPhone = localStorage.getItem('phone_' + userData.email);
+    if (!savedPhone) return;
+    fetch('/api/user/sync-phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ phone: savedPhone })
+    }).then(function(res) { return res.json(); }).then(function(data) {
+        if (data.phone) userData.phone = data.phone;
+    }).catch(function() {});
 }
 
 async function doLogin() {
@@ -2222,7 +2239,7 @@ async function doRegister() {
         const res = await fetch('/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password: pass, referralCode: ref, otp: code })
+            body: JSON.stringify({ email, password: pass, referralCode: ref, otp: code, phone: dialCode + phone })
         });
         const data = await res.json();
         if (data.error) { showToast(data.error); return; }
