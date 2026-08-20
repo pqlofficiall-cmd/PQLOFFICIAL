@@ -43,6 +43,31 @@ async function deriveMasterWallet() {
   return deriveWallet(0);
 }
 
+// Single source of truth for the sweep/receive destination — always the
+// address actually derived from MASTER_MNEMONIC, never a separately
+// configured MASTER_ADDRESS env var. A hand-set MASTER_ADDRESS that drifts
+// out of sync with the mnemonic (typo, stale copy-paste, mnemonic rotated)
+// silently sends swept deposits to an address nobody can open with the
+// mnemonic — the sweep still "succeeds" (valid txid) and gas still gets
+// deducted correctly from the real derived wallet, so nothing ever errors;
+// the funds just never show up in the actual HD wallet.
+let _cachedMasterAddress = null;
+async function getMasterAddress() {
+  if (!_cachedMasterAddress) {
+    const master = await deriveMasterWallet();
+    _cachedMasterAddress = master.address;
+    if (process.env.MASTER_ADDRESS && process.env.MASTER_ADDRESS !== _cachedMasterAddress) {
+      console.error(
+        `[tronWalletService] MASTER_ADDRESS env var (${process.env.MASTER_ADDRESS}) does NOT match ` +
+        `the address derived from MASTER_MNEMONIC (${_cachedMasterAddress}). Sweeps now go to the ` +
+        `derived address — if MASTER_ADDRESS was being used elsewhere, check any funds already sent ` +
+        `there under the old, wrong address.`
+      );
+    }
+  }
+  return _cachedMasterAddress;
+}
+
 // Derive child wallet for a user (index >= 1)
 async function deriveChildWallet(derivationIndex) {
   if (derivationIndex < CHILD_START_INDEX) {
@@ -66,7 +91,7 @@ async function getBalance(address) {
 
 // Get master wallet TRX balance
 async function getMasterBalance() {
-  return getBalance(process.env.MASTER_ADDRESS);
+  return getBalance(await getMasterAddress());
 }
 
 // Sweep entire balance from child wallet → master wallet
@@ -88,7 +113,7 @@ async function sweepToMaster(derivationIndex) {
   const sendSun = sunBalance - feeSun;
   if (sendSun <= 0) throw new Error('Insufficient balance after deducting fee');
 
-  const masterAddress = process.env.MASTER_ADDRESS;
+  const masterAddress = await getMasterAddress();
   const childTw = buildTronWeb(child.privateKey);
   const tx = await childTw.trx.sendTrx(masterAddress, sendSun, { privateKey: child.privateKey });
 
@@ -105,7 +130,7 @@ const USDT_CONTRACT = {
 async function sweepUSDTToMaster(derivationIndex) {
   const network = process.env.TRON_NETWORK || 'mainnet';
   const contractAddress = process.env.USDT_CONTRACT_ADDRESS || USDT_CONTRACT[network];
-  const masterAddress = process.env.MASTER_ADDRESS;
+  const masterAddress = await getMasterAddress();
 
   const child = await deriveChildWallet(derivationIndex);
   const tw = buildTronWeb(child.privateKey);
@@ -224,6 +249,7 @@ async function verifyTransaction(txHash) {
 module.exports = {
   deriveChildWallet,
   deriveMasterWallet,
+  getMasterAddress,
   getBalance,
   getMasterBalance,
   ensureChildTRX,

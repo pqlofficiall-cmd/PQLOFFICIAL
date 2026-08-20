@@ -17,14 +17,16 @@ class DepositPoller {
     this.apiKey = process.env.TRON_API_KEY;
     this.baseHost = this.network === 'mainnet' ? 'api.trongrid.io' : 'api.shasta.trongrid.io';
     this.usdtContract = process.env.USDT_CONTRACT_ADDRESS || USDT_CONTRACT[this.network] || USDT_CONTRACT.mainnet;
-    this.masterAddress = process.env.MASTER_ADDRESS || null;
+    this.masterAddress = null;
   }
 
   start() {
     const intervalMs = parseInt(process.env.DEPOSIT_POLL_INTERVAL_MS) || 600000; // 10 minutes default
-    
-    // Resolve master address to ignore gas fee deposits from it
-    if (!this.masterAddress && process.env.MASTER_MNEMONIC) {
+
+    // Resolve master address to ignore gas fee deposits from it. Always derive
+    // from MASTER_MNEMONIC (not a separately configured MASTER_ADDRESS env var)
+    // so this can never drift out of sync with the wallet sweeps actually pay into.
+    if (process.env.MASTER_MNEMONIC) {
       const tronWalletService = require('./tronWalletService');
       tronWalletService.deriveMasterWallet().then(w => {
         this.masterAddress = w.address;
